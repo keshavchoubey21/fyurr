@@ -183,7 +183,7 @@ def search_venues():
   #   }]
   # }
   search_term = request.form.get("search_term");
-  venues_query_result = Venue.query.filter(Venue.name.ilike('%' + search_term + '%')).all();
+  venues_query_result = db.session.query(Venue).filter(Venue.name.ilike('%' + search_term + '%')).all();
   list_of_venues = []
   for venue in venues_query_result:
      venue_list = {
