@@ -20,6 +20,7 @@ from flask_migrate import Migrate
 app = Flask(__name__)
 moment = Moment(app)
 app.config.from_object('config')
+app.app_context().push()
 db = SQLAlchemy(app)
 migrate = Migrate(app,db)
 
@@ -48,6 +49,9 @@ class Venue(db.Model):
     upcoming_show_count = db.Column(db.Integer)
     shows_list = db.relationship('Show', backref='venue', lazy=True)
 
+    def __repr__(self):
+      return f'<Todo {self.id} {self.name} {self.city} {self.state} {self.address} {self.phone} {self.image_link} {self.facebook_link} {self.genres} {self.webiste} {self.seeking_talent} {self.seeking_desc} {self.past_show_count} {self.upcoming_show_count}>'
+
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
 class Artist(db.Model):
@@ -71,6 +75,7 @@ class Artist(db.Model):
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
 # TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
+
 class Show(db.Model):
    __tablename__ = 'shows'
    id = db.Column(db.String(), primary_key=True)
@@ -108,27 +113,60 @@ def index():
 def venues():
   # TODO: replace with real venues data.
   #       num_upcoming_shows should be aggregated based on number of upcoming shows per venue.
-  data=[{
-    "city": "San Francisco",
-    "state": "CA",
-    "venues": [{
-      "id": 1,
-      "name": "The Musical Hop",
-      "num_upcoming_shows": 0,
-    }, {
-      "id": 3,
-      "name": "Park Square Live Music & Coffee",
-      "num_upcoming_shows": 1,
-    }]
-  }, {
-    "city": "New York",
-    "state": "NY",
-    "venues": [{
-      "id": 2,
-      "name": "The Dueling Pianos Bar",
-      "num_upcoming_shows": 0,
-    }]
-  }]
+  # data1=[{
+  #   "city": "San Francisco",
+  #   "state": "CA",
+  #   "venues": [{
+  #     "id": 1,
+  #     "name": "The Musical Hop",
+  #     "num_upcoming_shows": 0,
+  #   }, {
+  #     "id": 3,
+  #     "name": "Park Square Live Music & Coffee",
+  #     "num_upcoming_shows": 1,
+  #   }]
+  # }, {
+  #   "city": "New York",
+  #   "state": "NY",
+  #   "venues": [{
+  #     "id": 2,
+  #     "name": "The Dueling Pianos Bar",
+  #     "num_upcoming_shows": 0,
+  #   }]
+  # }]
+
+  data = []
+  areas = db.session.query(Venue.city,Venue.state).distinct().all();
+  # print(areas);
+  for area in areas:
+     city = area[0]
+     state= area[1]
+     sub_list = {
+        "city": city,
+        "state": state,
+        "venues": []
+     }
+     print('area value == '+ str(area))
+     venues = Venue.query.filter_by(city=city,state=state).all();
+     print(venues)
+     venues_list = []
+     for venue in venues:
+        venues_sub_list = {
+           "id": venue.id,
+           "name": venue.name,
+           "num_upcoming_shows": venue.upcoming_show_count
+        }
+        # print('for venue=' + str(venue) + ' sub_list = ' + str(venues_sub_list))
+        venues_list.append(venues_sub_list)
+     print('venues_list === '+ str(venues_list))
+     sub_list = {
+        "city": city,
+        "state": state,
+        "venues": venues_list
+     }
+     data.append(sub_list)
+
+     
   return render_template('pages/venues.html', areas=data);
 
 @app.route('/venues/search', methods=['POST'])
